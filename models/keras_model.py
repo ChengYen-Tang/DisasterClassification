@@ -20,7 +20,7 @@ const = {
     'conv_block2_1_slice-Slice1/begin': (0, 0, 232)
 }
 
-def setup_model(input_shape, label_count):
+def setup_model(input_shape):
 
 
     model = keras.Sequential(
@@ -48,8 +48,7 @@ def setup_model(input_shape, label_count):
             conv_block2(232, const['conv_block2_1_slice-Slice0/size'], const['slice-Slice0/begin'], const['conv_block2_1_slice-Slice1/begin'], const['conv_block2_0_reshape0/shape'], const['conv_block2_0_reshape1/shape']),
             conv_block2(232, const['conv_block2_1_slice-Slice0/size'], const['slice-Slice0/begin'], const['conv_block2_1_slice-Slice1/begin'], const['conv_block2_0_reshape0/shape'], const['conv_block2_0_reshape1/shape']),
             layers.Conv2D(1024, (1, 1), padding='SAME', activation='relu'),
-            layers.AveragePooling2D(pool_size=(7, 7), strides=(1, 1)),
-            linear2(label_count)
+            layers.AveragePooling2D(pool_size=(7, 7), strides=(1, 1))
         ])
 
     return model
@@ -143,7 +142,7 @@ class conv_block1(layers.Layer):
         conv_3 = self.conv3(inputs)
         conv_4 = self.conv4(conv_3)
 
-        concat = layers.concatenate([conv_2, conv_4], axis=2)
+        concat = layers.concatenate([conv_2, conv_4], axis=3)
         reshape = self.reshap0(concat)
         permute_dimensions = backend.permute_dimensions(reshape, pattern=const['transpose_perm'])
         reshape = self.reshap1(permute_dimensions)
