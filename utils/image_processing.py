@@ -13,13 +13,13 @@ def get_files(path):
             images_path.append(path + '/' + label + '/' + image_path)
             labels.append(label)
 
-    # group = np.array([images_path, labels])
-    # group = group.transpose()
-    # rng = np.random.default_rng()
-    # rng.shuffle(group)
+    group = np.array([images_path, labels])
+    group = group.transpose()
+    rng = np.random.default_rng()
+    rng.shuffle(group)
 
-    # images_path = np.array(group[:, 0])
-    # labels = np.array(group[:, 1])
+    images_path = np.array(group[:, 0])
+    labels = np.array(group[:, 1])
 
     images_path = np.array(images_path)
     labels = np.array(labels)
