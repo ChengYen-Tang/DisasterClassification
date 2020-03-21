@@ -1,5 +1,6 @@
 from utils.image_processing import load_files
-from models.tf2_model import Model
+from models.tf_model import Model
+from tensorflow.python.framework import graph_util
 
 import numpy as np
 import tensorflow as tf
@@ -10,18 +11,35 @@ def one_hot(indices, depth):
 images, labels = load_files('./dataset/train/')
 images_shape = images.shape
 
-one_hot_label = one_hot(labels,4)
+label_count = len(set(labels))
 
-optimizer = tf.optimizers.Adam()
+one_hot_label = one_hot(labels, label_count)
 
-def train(model, inputs, outputs):
-    with tf.GradientTape() as t:
-        current_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=model(inputs), labels=outputs))
-    grads = t.gradient(current_loss, [model.w, model.b])
-    optimizer.apply_gradients(zip(grads,[model.w, model.b]))
-    print(current_loss)
+steps = 1000
 
-model = Model(4)
+with tf.Session(graph=tf.Graph()) as sess:
+    inputs = tf.placeholder("float", [None, images_shape[1], images_shape[2], images_shape[3]])
+    labels = tf.placeholder("float", [None, label_count])
 
-for i in range(10000):
-    train(model,images,one_hot_label)
+    model = Model(label_count)
+
+    logits = model(inputs)
+    prediction = tf.nn.softmax(logits, name='loss')
+
+    # Define loss and optimizer
+    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
+    optimizer = tf.train.AdamOptimizer()
+
+    grads = tf.gradients(loss_op, [model.w, model.b])
+    grads = list(zip(grads,[model.w, model.b]))
+    train = optimizer.apply_gradients(grads)
+    sess.run(tf.global_variables_initializer())
+    
+    for i in range(steps):
+        loss, _ = sess.run([loss_op, train], feed_dict={inputs: images, labels: one_hot_label})
+        print('steps [ %d / %d ]: loss - %f' %(i + 1, steps, loss))
+
+    constant_graph = graph_util.convert_variables_to_constants(sess, sess.graph_def, ['loss'])
+
+    with tf.gfile.FastGFile('./model.pb', mode='wb') as f:
+        f.write(constant_graph.SerializeToString())
