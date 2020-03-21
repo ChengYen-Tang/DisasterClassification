@@ -5,9 +5,15 @@ import os
 def load_parameter(path):
     parameters = {}
     for parameter in os.listdir(path):
-        parameters[parameter.split('.')[0]] = np.load(path + '/' + parameter)
+        parameters[parameter.split('.')[0]] = np.load(path + '/' + parameter, allow_pickle=True)
         
     return parameters
+
+def save_parameter(path, file_name, data):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    np.save(path + '/' + file_name + '.npy', data)
+    
 
 const = {
     'block0_0_reshape0/shape': (-1, 784, 2, 58),
@@ -163,7 +169,7 @@ def fc(input, weights, biases):
         return biasadd, weights, biases
 
 class Model(object):
-    def __init__(self, label_count):
+    def __init__(self, label_count, weights_path=None):
         self.parameters = load_parameter('./models/parameters/')
         with tf.name_scope('fc') as scope:
             self.w = tf.Variable(tf.random.normal((1024, label_count)), name='weights', dtype=tf.float32)
@@ -195,3 +201,7 @@ class Model(object):
         layer, weights, biases = fc(layer, self.w, self.b)
 
         return layer
+
+    def save(self, path):
+        save_parameter(path, 'weight', self.w)
+        save_parameter(path, 'bias', self.b)
